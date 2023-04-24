@@ -1,0 +1,330 @@
+---
+title: "fpcc2-lab1-Diego-Kazadi"
+author: "Diego-Kazadi"
+date: "2023-04-24"
+output:  "pdf_document"
+word_document: true
+always_allow_html: true
+---
+
+```{r chunk1, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+## instalação pacotes
+install.packages('tinytex')
+install.packages("ggplot2")
+install.packages("dplyr")
+install.packages("janitor")
+install.packages("knitr")
+install.packages("readr")
+install.packages("kableExtra")
+
+# Carregar pacotes
+library(knitr)
+library(janitor)
+library(readr)
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(kableExtra)
+library(utils)
+library(knitr)
+
+
+```
+
+## Exploração Dados
+# Lendo o arquivo cursos-prouni.csv
+
+```{r cars}
+dff <- read_csv("cursos-prouni.csv")
+# explorar dados
+head(dff)
+# visualizar cursos da base
+unique(dff$curso_busca)
+names(dff)
+summary(dff)
+```
+
+## Questão
+# Q1 - Qual a diferença entre as mensalidades médias e medianas dos cursos de Ciência da Computação do Nordeste e Sudeste? Na sua opnião, essa diferença é estatisticamente significativa? Justifique.
+
+```{r pressure, echo=FALSE}
+# Filtra dados apenas para cursos de Ciência da Computação no Nordeste e Sudeste e armazena nas respectivas listas
+sigla_nordeste <- c("MA", "PI", "CE", "RN", "PB", "PE", "AL", "SE", "BA")
+sigla_sudeste <- c("SP", "RJ", "ES", "MG")
+
+# Criar vetores para mensalidades 
+mensalidades_nordeste <- c()
+mensalidades_sudeste <- c()
+
+# laço para armazenar apenas mensalidades de nordeste e sudeste da computação
+for (i in 1:nrow(dff)) {
+  if (dff$curso_busca[i] == "Ciência da Computação" & 
+      dff$uf_busca[i] %in% sigla_nordeste) {
+    if (!is.na(dff$mensalidade[i])) {
+      mensalidades_nordeste <- c(mensalidades_nordeste, dff$mensalidade[i])
+    }
+  }
+  
+  if (dff$curso_busca[i] == "Ciência da Computação" & 
+      dff$uf_busca[i] %in% sigla_sudeste) {
+    if (!is.na(dff$mensalidade[i])) {
+      mensalidades_sudeste <- c(mensalidades_sudeste, dff$mensalidade[i])
+    }
+  }
+}
+
+
+# visualizar os dois vetores mensalidades_nordeste e mensalidades_sudeste
+mensalidades_nordeste
+mensalidades_sudeste
+
+# Calcular media e mediana nordeste
+media_nordeste <- mean(mensalidades_nordeste)
+mediana_nordeste <- median(mensalidades_nordeste)
+
+# Calcular media e mediana sudeste
+media_sudeste <- mean(mensalidades_sudeste)
+mediana_sudeste <- median(mensalidades_sudeste)
+
+# visualizar media e mediana
+media_nordeste 
+mediana_nordeste
+
+media_sudeste
+mediana_sudeste
+
+
+cat("Observar que a média de mensalidades para Ciência da Computação no Nordeste (704.80) é menor do que no Sudeste (893.32), indicando que, em média, os cursos na região Nordeste são mais acessíveis financeiramente. 
+    Já a mediana no Nordeste (677.83) é menor do que no Sudeste (758), o que indica que a maioria dos cursos no Nordeste tem mensalidades mais baixas em relação ao Sudeste.")
+
+
+# Calcular a diferença entre as médias e medianas
+dif_media <- media_nordeste - media_sudeste
+dif_mediana <- mediana_nordeste - mediana_sudeste
+
+dif_media
+dif_mediana
+
+# Imprime as diferenças encontradas
+cat("A diferença entre as médias das mensalidades de cursos de Ciência da Computação no Nordeste e Sudeste é de", dif_media, "reais.")
+cat("\nA diferença entre as medianas das mensalidades de cursos de Ciência da Computação no Nordeste e Sudeste é de", dif_mediana, "reais.")
+
+# Criar tabela
+tabela_diferenca <- data.frame(
+  `Região` = c("Nordeste", "Sudeste"),
+  `Média` = c(media_nordeste, media_sudeste),
+  `Mediana` = c(mediana_nordeste, mediana_sudeste),
+  `Diferença` = c(dif_media, dif_mediana)
+)
+
+# Exibir tabela formatada
+kable(tabela_diferenca, align = "c")
+
+
+cat("A diferença negativa entre as médias e medianas dos valores das mensalidades entre as regiões
+    Nordeste e Sudeste indica que, em geral, as mensalidades dos cursos de Ciências da Computação na região Nordeste são menores que as da região Sudeste.")
+
+
+# Realizando o teste t de Student
+t_test <- t.test(mensalidades_nordeste, mensalidades_sudeste, var.equal = TRUE)
+
+# Imprimindo os resultados do teste
+print(t_test)
+
+cat(" há uma diferença significativa entre as médias de mensalidade entre o
+    nordeste e o sudeste, com um valor de p de 0,01949. O intervalo de confiança de 95%
+    média de mensalidade no nordeste é significativamente menor do que a média de mensalidade no sudeste")
+
+
+# criar um data frame com as informações que serão plotadas
+dff_plotar <- data.frame(regiao = c("Nordeste", "Sudeste"), 
+                 media = c(media_nordeste, media_sudeste), 
+                 mediana = c(mediana_nordeste, mediana_sudeste))
+
+# plotar gráfico de barras
+ggplot(dff_plotar, aes(x = regiao, y = media, fill = "Média")) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_bar(aes(y = mediana, fill = "Mediana"), stat = "identity", position = "dodge") +
+  scale_fill_manual(name = "Estatística", 
+                    values = c("Média" = "#0072B2", "Mediana" = "#D55E00")) +
+  xlab("Região") + 
+  ylab("Mensalidade") +
+  ggtitle("Mensalidade de Ciência da Computação por região") +
+  theme_bw()
+```
+
+## Questão
+# Q2 - Quais são os top 10 cursos com maior valor de mensalidade pelo total de bolsas (diferentes tipos)? Existe uma relação entre o valor total de mensalidade e o total de bolsas por curso? Justifique.
+```{r confinguracao, include=FALSE}
+# Agrupando os cursos e depois somar todas as bolsas para depois ordenar de forma decrescente
+top_cursos_10 <- dff %>% 
+  group_by(curso_busca) %>% 
+  summarise(mensalidade_max = max(mensalidade),
+            total_bolsa_integral_cotas = sum(bolsa_integral_cotas),
+            total_bolsa_integral_ampla = sum(bolsa_integral_ampla),
+            total_bolsa_parcial_cotas = sum(bolsa_parcial_cotas),
+            total_bolsa_parcial_ampla = sum(bolsa_parcial_ampla),
+            total_bolsas = sum(bolsa_integral_cotas, bolsa_integral_ampla, bolsa_parcial_cotas, bolsa_parcial_ampla)) %>% 
+  arrange(desc(mensalidade_max)) %>% 
+  head(10)
+
+top_cursos_10
+
+cat("Na verdade, o resultado que obtivemos indica que os cursos com maior valor de mensalidade, naquele momento, 
+    não tem informações disponíveis sobre as bolsas oferecidas, pois todas as colunas referentes às bolsas apresentaram valores ausentes (NA).
+    Dessa forma, não é possível afirmar se há ou não uma relação entre o valor total de mensalidade e o total de bolsas por curso, 
+    pois não temos informações completas para realizar essa análise.")
+
+# Gerar  gráfico de barras com os 10 cursos que possuem a mensalidade mais alta
+
+# Criar o gráfico
+ggplot(top_cursos_10, aes(x = curso_busca, y = mensalidade_max)) +
+  geom_col(fill = "#0072B2") +
+  xlab("Curso") +
+  ylab("Mensalidade máxima") +
+  ggtitle("Top 10 cursos com a mensalidade mais alta") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+# rotacionar as labels do eixo x
+
+```
+
+## Questão
+# Q3 - Quais são os cursos tecnológicos da Paraíba que oferecem mais bolsas de estudo e quantas bolsas de cada tipo estes cursos oferecem?
+
+```{r}
+df_tec_paraiba <- dff %>%
+  filter(uf_busca == "PB", grau == "Tecnológico") %>%
+  group_by(curso_busca) %>%
+  summarise(
+    total_bolsa_integral_cotas = sum(bolsa_integral_cotas),
+    total_bolsa_integral_ampla = sum(bolsa_integral_ampla),
+    total_bolsa_parcial_cotas = sum(bolsa_parcial_cotas),
+    total_bolsa_parcial_ampla = sum(bolsa_parcial_ampla),
+    total_bolsas = sum(
+      bolsa_integral_cotas,
+      bolsa_integral_ampla,
+      bolsa_parcial_cotas,
+      bolsa_parcial_ampla
+    )
+  ) %>%
+  arrange(desc(total_bolsas)) %>%
+  head(10)
+
+cat("Os cursos tecnológicos da Paraíba que oferecem mais bolsas de estudo são:\n")
+print(unique(df_tec_paraiba$curso_busca))
+
+cat("\nQuantidade de bolsas de cada tipo oferecidas por esses cursos:\n")
+print(df_tec_paraiba)
+
+df_tec_paraiba %>%
+  group_by(curso_busca) %>%
+  summarise(total_bolsas = sum(total_bolsas), 
+            total_bolsa_integral_cotas = sum(total_bolsa_integral_cotas),
+            total_bolsa_integral_ampla = sum(total_bolsa_integral_ampla),
+            total_bolsa_parcial_cotas = sum(total_bolsa_parcial_cotas),
+            total_bolsa_parcial_ampla = sum(total_bolsa_parcial_ampla)) %>%
+  arrange(desc(total_bolsas)) %>%
+  slice_head(n = 10)
+
+```
+## Questão
+# Q4 - Considerando os cursos de Ciência da Computação, Engenharia da Computação e Sistemas de Informação, qual o percentual de bolsas ofertadas para cada modalidade (a distância, integral, noturno, etc.) por cada um dos cursos? Existe uma modalidade que é predominante? 
+
+```{r setup4, include=FALSE}
+# Filtrar a base de dados e manter apenas 3 cursos
+df_filt <- dff %>% 
+  filter(curso_busca %in% c("Ciência da Computação", "Engenharia da Computação", "Sistemas de Informação"))
+
+# Agrupar os dados por curso e somando bolsa por cada tipo 
+df_grouped <- df_filt %>% 
+  group_by(curso_busca, turno) %>% 
+  summarise(total_bolsas = sum(bolsa_integral_cotas, bolsa_integral_ampla, bolsa_parcial_cotas, bolsa_parcial_ampla), .groups = 'drop')
+
+
+df_grouped <- df_filt %>% 
+  group_by(curso_busca, turno) %>% 
+  summarise(total_bolsas = sum(bolsa_integral_cotas, bolsa_integral_ampla, bolsa_parcial_cotas, bolsa_parcial_ampla), .groups = 'drop')
+
+
+# Calculando o percentual de cada bolsa para cada turno
+df_percentual <- df_grouped %>% 
+  group_by(curso_busca, turno) %>% 
+  mutate(percentual_bolsas = total_bolsas/sum(total_bolsas)*100) %>% 
+  ungroup()
+
+# Visualizando a tabela resultante
+df_percentual
+
+# Filtrar a base de dados e manter apenas 3 cursos
+df_filt <- dff %>% 
+  filter(curso_busca %in% c("Ciência da Computação", "Engenharia da Computação", "Sistemas de Informação"))
+
+# Somar as bolsas e calcular percentil delas em relação cada tipo de modalidade
+df_grouped <- df_filt %>% 
+  group_by(curso_busca, turno) %>% 
+  summarise(total_bolsa_integral_cotas = sum(bolsa_integral_cotas),
+            total_bolsa_integral_ampla = sum(bolsa_integral_ampla),
+            total_bolsa_parcial_cotas = sum(bolsa_parcial_cotas),
+            total_bolsa_parcial_ampla = sum(bolsa_parcial_ampla),
+            total_bolsas = sum(bolsa_integral_cotas, bolsa_integral_ampla, bolsa_parcial_cotas, bolsa_parcial_ampla)) %>% 
+  mutate(percentual_integral_cotas = round(total_bolsa_integral_cotas/total_bolsas*100, 2),
+         percentual_integral_ampla = round(total_bolsa_integral_ampla/total_bolsas*100, 2),
+         percentual_parcial_cotas = round(total_bolsa_parcial_cotas/total_bolsas*100, 2),
+         percentual_parcial_ampla = round(total_bolsa_parcial_ampla/total_bolsas*100, 2))
+
+# visualizar 
+print(df_grouped, n = Inf)
+df_grouped %>% 
+  select(curso_busca, turno, percentual_parcial_ampla)
+
+# Verificar turno predominante
+df_turno <- df_filt %>%
+  group_by(curso_busca, turno) %>%
+  summarise(total_bolsas = sum(bolsa_integral_cotas + bolsa_integral_ampla + bolsa_parcial_cotas + bolsa_parcial_ampla)) %>%
+  arrange(desc(total_bolsas)) %>%
+  distinct(curso_busca, .keep_all = TRUE)
+
+df_turno %>% 
+  group_by(turno) %>% 
+  summarise(total_cursos = n()) %>% 
+  arrange(desc(total_cursos))
+
+
+# Criar nova coluna com turno predominante em cada curso
+df_grouped <- df_grouped %>% 
+  mutate(turno_predominante = case_when(percentual_integral_cotas > 50 ~ "Integral - Cotas",
+                                        percentual_integral_ampla > 50 ~ "Integral - Ampla concorrência",
+                                        percentual_parcial_cotas > 50 ~ "Parcial - Cotas",
+                                        percentual_parcial_ampla > 50 ~ "Parcial - Ampla concorrência",
+                                        TRUE ~ "Indefinido"))
+df_grouped
+# Gerar a tabela
+df_grouped %>% kable(format = "html", align = "c") %>% kable_styling(full_width = F)
+
+cat(" O valor 50 é usado como um limite para definir o que é considerado como predominante,
+      Se a porcentagem de um determinado tipo de bolsa em um curso e turno for maior 
+      que 50%, significa que esse tipo de bolsa é o predominante. Caso contrário, o turno é considerado Indefinido")
+cat("Portanto, existem curso com a modalidade predominante como: Sistemas de Informação   Parcial - Ampla concorrência")
+
+# Visualizar dados
+df_grouped %>% 
+  select(curso_busca, turno_predominante) %>% 
+  distinct()
+
+# plotar com gráfico de barra empilhadas com a contagem de cursos para cada turno predominante
+df_grouped %>%
+  ggplot(aes(x = turno_predominante, fill = "turno")) +
+  geom_bar(position = "stack") +
+  labs(title = "Distribuição de cursos por turno predominante e tipo de concorrência",
+       x = "Turno predominante",
+       y = "Contagem de cursos") +
+  scale_fill_manual(name = "Tipo de concorrência",
+                    values = c("Indefinido" = "#0072B2",
+                               "Parcial - Ampla Concorrência" = "#D55E00"))
+
+names(df_grouped)
+```
+

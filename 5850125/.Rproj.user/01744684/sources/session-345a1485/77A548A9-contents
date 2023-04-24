@@ -1,0 +1,100 @@
+---
+title: "aulas_dados"
+output:
+  html_document: default
+  pdf_document: default
+date: '2023-04-11'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+## instalação pacotes
+install.packages("ggplot2")
+install.packages("dplyr")
+install.packages("janitor")
+install.packages("knitr")
+install.packages("readr")
+install.packages("kableExtra")
+# Carregar pacotes
+library(knitr)
+library(janitor)
+library(readr)
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(kableExtra)
+library(utils)
+```
+
+
+```{r setup, include=FALSE}
+dff$curso_busca
+```
+
+## Questão
+
+Qual a mensalidade média e máxima por estado?
+
+```{r cars, echo=FALSE}
+dp <- dff %>% 
+  group_by(uf_busca) %>% 
+  summarise(mens_media = mean(mensalidade),
+            mens_max = max(mensalidade),
+            mens_median = median(mensalidade))
+
+ggplot(dp, aes(reorder(uf_busca, mens_media), mens_media, fill=uf_busca)) + 
+  geom_bar(stat = 'identity') + 
+  geom_point(aes(y=mens_median)) + 
+  theme_bw() + 
+  theme(legend.position = "none") + 
+  xlab('Estado') + ylab('Mensalidade média')
+```
+
+```{r}
+dp <- dff %>% 
+  group_by(curso_busca) %>% 
+  summarise(mens_media = mean(mensalidade),
+            mens_max = max(mensalidade),
+            mens_median = median(mensalidade))
+
+dp
+```
+
+```{r}
+top10_cursos <- dff %>% 
+  group_by(curso_busca) %>%
+  summarise(qndt = n())
+
+top10_cursos %>% arrange(desc(qndt)) %>% head(n= 10)
+```
+
+```{r}
+dp <- dff %>% 
+  filter(!is.na(nota_integral_ampla)) %>%
+  group_by(uf_busca) %>% 
+  summarise(nota_media = mean(nota_integral_ampla),
+            nota_max = max(nota_integral_ampla),
+            nota_median = median(nota_integral_ampla))
+
+ggplot(dp, aes(reorder(uf_busca, nota_media), nota_media, fill=uf_busca)) + 
+  geom_bar(stat = 'identity') + 
+  geom_point(aes(y=nota_median)) + 
+  theme_bw() + 
+  theme(legend.position = "none") + 
+  xlab('Estado') + ylab('Nota média')
+```
+
+```{r}
+dp <- dff %>% 
+  filter(!is.na(nota_integral_ampla)) %>%
+  select(mensalidade, nota = nota_integral_ampla)
+
+ggplot(dp, aes(log10(mensalidade), nota)) + 
+  geom_point() + 
+  geom_smooth(method = 'lm')
+
+cor(dp$mensalidade, dp$nota, method = 'pearson')
+cor(log10(dp$mensalidade), dp$nota, method = 'pearson')
+cor(dp$mensalidade, dp$nota, method = 'spearman')
+```
+

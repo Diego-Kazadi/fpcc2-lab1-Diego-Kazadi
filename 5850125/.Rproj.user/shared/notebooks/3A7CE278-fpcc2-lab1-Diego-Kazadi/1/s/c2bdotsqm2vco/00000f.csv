@@ -1,0 +1,11 @@
+"0","dff <- read_csv(""cursos-prouni.csv"")"
+"2","[1mRows: [22m[34m41447[39m [1mColumns: [22m[34m20[39m"
+"2","[36m──[39m [1mColumn specification[22m [36m──────────────────────────────────────[39m
+[1mDelimiter:[22m "",""
+[31mchr[39m  (9): grau, turno, curso_busca, cidade_busca, uf_busca...
+[32mdbl[39m (11): mensalidade, bolsa_integral_cotas, bolsa_integra..."
+"2","
+[36mℹ[39m Use `spec()` to retrieve the full column specification for this data.
+[36mℹ[39m Specify the column types or set `show_col_types = FALSE` to quiet this message."
+"0","# explorar dados"
+"0","head(dff)"
